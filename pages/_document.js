@@ -1,6 +1,5 @@
 import { Html, Head, Main, NextScript } from "next/document";
 import Layout from "@/components/Layout/Layout";
-import { Toaster } from "react-hot-toast";
 
 export default function Document() {
   return (
@@ -8,7 +7,6 @@ export default function Document() {
       <Head />
       <body className="antialiased bg-white">
         <Layout>
-          <Toaster position="top-center" />
           <Main />
           <NextScript />
         </Layout>

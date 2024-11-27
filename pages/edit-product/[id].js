@@ -3,7 +3,6 @@ import { useRouter } from "next/router";
 import axios from "axios";
 import useSWR from "swr";
 import { storage, ref, uploadBytes, getDownloadURL } from "../../firebase";
-import toast from "react-hot-toast";
 
 // Fetcher function for SWR
 const fetcher = (url) => axios.get(url).then((res) => res.data);
@@ -86,10 +85,10 @@ const EditProductForm = () => {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       setFormData((prev) => ({ ...prev, [field]: url }));
-      toast.success("Image uploaded successfully!");
+      alert("Image uploaded successfully!");
     } catch (error) {
       console.error("File upload error:", error);
-      toast.error("Failed to upload image.");
+      alert("Failed to upload image.");
     } finally {
       setUploading(false);
     }
@@ -116,10 +115,10 @@ const EditProductForm = () => {
         formData
       );
       if (response.status === 200) {
-        toast.success("Product updated successfully!");
+        alert("Product updated successfully!");
         router.push("/");
       } else {
-        toast.error("Failed to update product.");
+        alert("Failed to update product.");
       }
     } catch (error) {
       console.error("Error updating product:", error);
