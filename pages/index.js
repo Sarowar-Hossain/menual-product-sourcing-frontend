@@ -1,115 +1,118 @@
-import Image from "next/image";
-import localFont from "next/font/local";
+import useSWR from "swr";
+import axios from "axios";
+import { useState } from "react";
+import Link from "next/link";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+const fetcher = (url) => axios.get(url).then((res) => res.data);
 
 export default function Home() {
+  const { data, error, mutate, isLoading } = useSWR(
+    "https://sourcexpet-apis-qtuam.ondigitalocean.app/api/product-sourcing",
+    fetcher
+  );
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const handleDelete = async (productId) => {
+    setIsDeleteLoading(true);
+    try {
+      await axios.delete(
+        `https://sourcexpet-apis-qtuam.ondigitalocean.app/api/product-sourcing/${productId}`
+      );
+      alert("Product deleted successfully!");
+      mutate();
+      setSelectedProduct(null);
+    } catch (err) {
+      alert("Failed to delete the product");
+    } finally {
+      setIsDeleteLoading(false);
+    }
+  };
   return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              pages/index.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="grid gap-3 p-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {isLoading ? (
+        <p className="text-center text-gray-500">Loading...</p>
+      ) : error ? (
+        <p className="text-center text-red-500">Failed to load products.</p>
+      ) : (
+        <>
+          {data?.length > 0 ? (
+            data?.map((product) => {
+              return (
+                <div
+                  key={product?._id}
+                  className="bg-white shadow-lg rounded-lg overflow-hidden"
+                >
+                  <img
+                    className="w-full h-48 object-cover rounded-t-lg"
+                    src={product?.productImageUrl}
+                    alt={product?.name}
+                  />
+                  <div className="p-4">
+                    <h2 className="text-xl font-bold text-indigo-500">
+                      {product?.name}
+                    </h2>
+                    <p className="text-gray-700 text-sm">
+                      {product?.description.slice(0, 50)}
+                    </p>
+                    <p className="text-lg font-semibold mt-2">
+                      Price: ${product?.price}
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      Category: {product?.category}
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      Package: {product?.packageNumber}
+                    </p>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+                    <div className="mt-4 flex justify-between">
+                      <Link href={`/edit-product/${product?._id}`}>
+                        <button className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-4 rounded">
+                          Edit
+                        </button>
+                      </Link>
+                      <button
+                        onClick={() => setSelectedProduct(product)}
+                        className="bg-red-500 hover:bg-red-600 text-white py-1 px-4 rounded"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-center text-gray-500">No products found.</p>
+          )}
+        </>
+      )}
+
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+            <p className="text-gray-700">
+              Are you sure you want to delete{" "}
+              <strong>{selectedProduct?.name}</strong>?
+            </p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button
+                onClick={() => setSelectedProduct(null)}
+                className="bg-gray-500 hover:bg-gray-600 text-white py-1 px-4 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(selectedProduct?._id)}
+                className="bg-red-500 hover:bg-red-600 text-white py-1 px-4 rounded"
+                disabled={isDeleteLoading}
+              >
+                {isDeleteLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
 }
