@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { storage, ref, uploadBytes, getDownloadURL } from '../firebase';
 import axios from 'axios';
-import toast from 'react-hot-toast';
 import { useRouter } from 'next/router';
 
 const ProductForm = () => {
@@ -79,7 +78,7 @@ const ProductForm = () => {
       const response = await axios.post('https://sourcexpet-apis-qtuam.ondigitalocean.app/api/product-sourcing', formData);
       console.log(response);
       if (response.status === 201) {
-        toast.success('Product added successfully!');
+        alert('Product added successfully!');
         setFormData({
           name: '',
           category: '',
@@ -93,7 +92,7 @@ const ProductForm = () => {
         });
         router.push('/');
       } else {
-        toast.error('Failed to add product.');
+        alert('Failed to add product.');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
